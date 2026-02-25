@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Spatial Communication</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-void: #0a0a0f;
+            --bg-depth: #12121a;
+            --bg-surface: #1a1a25;
+            --bg-elevated: #222230;
+            --accent-cyan: #00f0ff;
+            --accent-purple: #b829dd;
+            --accent-pink: #ff006e;
+            --accent-green: #00ff88;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --text-muted: #5a5a6e;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-void);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(0, 240, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(184, 41, 221, 0.03) 0%, transparent 50%);
+        }
+
+        .universe {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Orbital Server Navigation */
+        .orbital-nav {
+            width: 80px;
+            background: var(--bg-depth);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .orbital-nav::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(180deg, rgba(0, 240, 255, 0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .nexus-home {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nexus-home:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
+        }
+
+        .orbit-divider {
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            margin: 8px 0;
+            opacity: 0.5;
+        }
+
+        .planet {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--bg-surface);
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            font-weight: 700;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .planet::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: inherit;
+            border-radius: inherit;
+            filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .planet:hover::before {
+            opacity: 0.5;
+        }
+
+        .planet.active {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3), inset 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+
+        .planet.active::after {
+            content: '';
+            position: absolute;
+            left: -6px;
+            width: 3px;
+            height: 20px;
+            background: var(--accent-cyan);
+            border-radius: 0 3px 3px 0;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .planet-1 { background: linear-gradient(135deg, #ff006e, #8338ec); }
+        .planet-2 { background: linear-gradient(135deg, #3a86ff, #8338ec); }
+        .planet-3 { background: linear-gradient(135deg, #06ffa5, #00c9ff); }
+        .planet-4 { background: linear-gradient(135deg, #ffbe0b, #fb5607); }
+
+        .add-orbit {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px dashed var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .add-orbit:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            transform: rotate(90deg);
+        }
+
+        /* Constellation Sidebar */
+        .constellation-sidebar {
+            width: 260px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .nebula-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .nebula-header:hover {
+            background: var(--glass);
+        }
+
+        .nebula-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            letter-spacing: -0.5px;
+        }
+
+        .nebula-status {
+            font-size: 12px;
+            color: var(--accent-green);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nebula-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .channels-nebula {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .star-cluster {
+            margin-bottom: 24px;
+        }
+
+        .cluster-name {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .cluster-name:hover {
+            color: var(--text-secondary);
+        }
+
+        .star-channel {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 15px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .star-channel::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-cyan);
+            transform: scaleY(0);
+            transition: transform 0.2s;
+        }
+
+        .star-channel:hover {
+            background: var(--glass);
+            color: var(--text-primary);
+        }
+
+        .star-channel.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+
+        .star-channel.active::before {
+            transform: scaleY(1);
+        }
+
+        .star-icon {
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .star-channel.active .star-icon {
+            opacity: 1;
+            color: var(--accent-cyan);
+        }
+
+        .channel-meta {
+            margin-left: auto;
+            font-size: 11px;
+            background: var(--accent-pink);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .void-traveler {
+            padding: 16px;
+            background: var(--bg-depth);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .traveler-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .traveler-status {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 14px;
+            height: 14px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            border: 3px solid var(--bg-depth);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .traveler-info {
+            flex: 1;
+        }
+
+        .traveler-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .traveler-id {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .traveler-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .control-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: var(--glass);
+            color: var(--text-primary);
+        }
+
+        /* Main Void - Chat Area */
+        .void-space {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-void);
+            position: relative;
+        }
+
+        .void-space::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(180deg, rgba(0, 240, 255, 0.02) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .horizon-header {
+            height: 64px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .horizon-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .horizon-icon {
+            color: var(--accent-cyan);
+            font-size: 24px;
+        }
+
+        .horizon-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--glass-border);
+        }
+
+        .horizon-topic {
+            color: var(--text-secondary);
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .horizon-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .action-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .action-icon:hover {
+            background: var(--glass);
+            color: var(--text-primary);
+        }
+
+        .action-icon[data-badge]::after {
+            content: attr(data-badge);
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--accent-pink);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 10px;
+            border: 2px solid var(--bg-void);
+        }
+
+        .search-wormhole {
+            width: 160px;
+            height: 36px;
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-wormhole:focus {
+            border-color: var(--accent-cyan);
+            width: 240px;
+        }
+
+        .search-wormhole::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Message Stream */
+        .message-stream {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .signal-boost {
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 20px;
+        }
+
+        .signal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 0 60px rgba(0, 240, 255, 0.2);
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .signal-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .signal-desc {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .transmission {
+            display: flex;
+            gap: 16px;
+            padding: 8px 16px;
+            margin: 0 -16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .transmission:hover {
+            background: var(--glass);
+        }
+
+        .transmission-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .transmission-avatar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.2));
+        }
+
+        .transmission-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .transmission-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .transmission-author {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--accent-cyan);
+            cursor: pointer;
+        }
+
+        .transmission-author:hover {
+            text-decoration: underline;
+        }
+
+        .transmission-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'Courier New', monospace;
+        }
+
+        .transmission-body {
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-size: 15px;
+            word-wrap: break-word;
+        }
+
+        .transmission-body a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .transmission-body a:hover {
+            text-decoration: underline;
+        }
+
+        .reaction-orbit {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .reaction {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .reaction:hover {
+            border-color: var(--accent-cyan);
+            background: var(--bg-elevated);
+        }
+
+        .reaction.active {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Input Singularity */
+        .input-singularity {
+            padding: 24px;
+            background: linear-gradient(0deg, var(--bg-void) 0%, transparent 100%);
+        }
+
+        .singularity-container {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .singularity-container:focus-within {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.1);
+        }
+
+        .input-attachments {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .attach-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: var(--bg-elevated);
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+
+        .attach-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-void);
+            transform: translateY(-2px);
+        }
+
+        .message-warp {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .warp-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            min-height: 24px;
+            max-height: 120px;
+        }
+
+        .warp-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .warp-send {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--accent-cyan);
+            border: none;
+            color: var(--bg-void);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+            font-weight: 700;
+        }
+
+        .warp-send:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .warp-send:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Entity List (Members) */
+        .entity-list {
+            width: 240px;
+            background: var(--bg-surface);
+            border-left: 1px solid var(--glass-border);
+            padding: 24px 16px;
+        }
+
+        .entity-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .entity-count {
+            background: var(--bg-elevated);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .entity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            margin: 4px -8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .entity:hover {
+            background: var(--glass);
+        }
+
+        .entity-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .entity-status {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            border: 2px solid var(--bg-surface);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .entity-status.streaming {
+            background: var(--accent-pink);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .entity-status.away {
+            background: var(--accent-pink);
+        }
+
+        .entity-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .entity-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .entity-activity {
+            font-size: 11px;
+            color: var(--accent-cyan);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .entity-role {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-elevated);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Floating Elements */
+        .floating-notification {
+            position: fixed;
+            bottom: 100px;
+            right: 280px;
+            background: var(--bg-surface);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(0, 240, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .notification-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="universe">
+        <!-- Orbital Navigation -->
+        <nav class="orbital-nav">
+            <div class="nexus-home" onclick="goHome()">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+            </div>
+            <div class="orbit-divider"></div>
+            <div class="planet planet-1 active" onclick="enterOrbit(this, 'nebula')">N</div>
+            <div class="planet planet-2" onclick="enterOrbit(this, 'quantum')">Q</div>
+            <div class="planet planet-3" onclick="enterOrbit(this, 'singularity')">S</div>
+            <div class="planet planet-4" onclick="enterOrbit(this, 'void')">V</div>
+            <div class="add-orbit" onclick="createOrbit()">+</div>
+        </nav>
+
+        <!-- Constellation Sidebar -->
+        <aside class="constellation-sidebar">
+            <div class="nebula-header" onclick="showServerMenu()">
+                <div class="nebula-title">
+                    Nebula Station
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="nebula-status">12 Quantum Entangled</div>
+            </div>
+
+            <div class="channels-nebula">
+                <div class="star-cluster">
+                    <div class="cluster-name">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(-90deg);">
+                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                        </svg>
+                        Text Constellations
+                    </div>
+                    <div class="star-channel active" onclick="tuneChannel(this, 'general')">
+                        <span class="star-icon">#</span>
+                        <span>general</span>
+                    </div>
+                    <div class="star-channel" onclick="tuneChannel(this, 'quantum-lab')">
+                        <span class="star-icon">#</span>
+                        <span>quantum-lab</span>
+                        <span class="channel-meta">3</span>
+                    </div>
+                    <div class="star-channel" onclick="tuneChannel(this, 'void-art')">
+                        <span class="star-icon">#</span>
+                        <span>void-art</span>
+                    </div>
+                    <div class="star-channel" onclick="tuneChannel(this, 'help-desk')">
+                        <span class="star-icon">#</span>
+                        <span>help-desk</span>
+                    </div>
+                </div>
+
+                <div class="star-cluster">
+                    <div class="cluster-name">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(-90deg);">
+                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                        </svg>
+                        Voice Vortices
+                    </div>
+                    <div class="star-channel" onclick="enterVortex(this)">
+                        <span class="star-icon">🔊</span>
+                        <span>General Vortex</span>
+                    </div>
+                    <div class="star-channel" onclick="enterVortex(this)">
+                        <span class="star-icon">🎮</span>
+                        <span>Gaming Singularity</span>
+                        <span class="channel-meta">LIVE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="void-traveler">
+                <div class="traveler-avatar">
+                    ME
+                    <div class="traveler-status"></div>
+                </div>
+                <div class="traveler-info">
+                    <div class="traveler-name">VoidWalker</div>
+                    <div class="traveler-id">#QUANTUM</div>
+                </div>
+                <div class="traveler-controls">
+                    <div class="control-btn" onclick="toggleMute()" title="Mute">🎤</div>
+                    <div class="control-btn" onclick="toggleDeafen()" title="Deafen">🎧</div>
+                    <div class="control-btn" onclick="openSettings()" title="Settings">⚙️</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Void Space -->
+        <main class="void-space">
+            <header class="horizon-header">
+                <div class="horizon-title">
+                    <span class="horizon-icon">#</span>
+                    <span id="current-channel">general</span>
+                </div>
+                <div class="horizon-divider"></div>
+                <div class="horizon-topic">General discussion across the multiverse</div>
+                <div class="horizon-actions">
+                    <div class="action-icon" data-badge="3">🔔</div>
+                    <div class="action-icon">📌</div>
+                    <div class="action-icon">👥</div>
+                    <input type="text" class="search-wormhole" placeholder="Search the void...">
+                </div>
+            </header>
+
+            <div class="message-stream" id="messageStream">
+                <div class="signal-boost">
+                    <div class="signal-icon">🌌</div>
+                    <div class="signal-title">Welcome to #general</div>
+                    <div class="signal-desc">This is the beginning of your journey through the Nebula Station. Messages here transcend space and time.</div>
+                </div>
+            </div>
+
+            <div class="input-singularity">
+                <div class="singularity-container">
+                    <div class="input-attachments">
+                        <div class="attach-btn" title="Upload">📎</div>
+                        <div class="attach-btn" title="Voice">🎙️</div>
+                        <div class="attach-btn" title="GIF">🎭</div>
+                        <div class="attach-btn" title="Emoji">😊</div>
+                    </div>
+                    <div class="message-warp">
+                        <textarea class="warp-input" id="warpInput" placeholder="Transmit message to #general..." rows="1" onkeypress="handleWarp(event)"></textarea>
+                        <button class="warp-send" id="warpBtn" onclick="transmit()" disabled>➤</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Entity List -->
+        <aside class="entity-list">
+            <div class="entity-header">
+                Entangled Entities
+                <span class="entity-count">42</span>
+            </div>
+            
+            <div class="entity-header" style="margin-top: 8px; font-size: 10px; color: var(--accent-cyan);">
+                Broadcasting
+            </div>
+            <div class="entity">
+                <div class="entity-avatar" style="background: linear-gradient(135deg, #ff006e, #8338ec);">
+                    VS
+                    <div class="entity-status streaming"></div>
+                </div>
+                <div class="entity-info">
+                    <div class="entity-name">Void_Singer</div>
+                    <div class="entity-activity">🔴 LIVE: Coding Session</div>
+                </div>
+                <div class="entity-role" style="background: var(--accent-pink);"></div>
+            </div>
+
+            <div class="entity-header" style="margin-top: 16px;">
+                Online
+            </div>
+            <div class="entity">
+                <div class="entity-avatar" style="background: linear-gradient(135deg, #3a86ff, #8338ec);">
+                    QX
+                    <div class="entity-status"></div>
+                </div>
+                <div class="entity-info">
+                    <div class="entity-name">Quantum_X</div>
+                    <div class="entity-activity">Exploring the void</div>
+                </div>
+            </div>
+            <div class="entity">
+                <div class="entity-avatar" style="background: linear-gradient(135deg, #06ffa5, #00c9ff);">
+                    NL
+                    <div class="entity-status"></div>
+                </div>
+                <div class="entity-info">
+                    <div class="entity-name">Nebula_Light</div>
+                    <div class="entity-activity">Designing futures</div>
+                </div>
+            </div>
+            <div class="entity">
+                <div class="entity-avatar" style="background: linear-gradient(135deg, #ffbe0b, #fb5607);">
+                    SK
+                    <div class="entity-status away"></div>
+                </div>
+                <div class="entity-info">
+                    <div class="entity-name">Star_Knight</div>
+                    <div class="entity-activity">Away - Coffee break</div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // Quantum message database
+        const quantumArchives = {
+            general: [
+                { author: 'Quantum_X', avatar: 'linear-gradient(135deg, #3a86ff, #8338ec)', text: 'Has anyone experimented with the new neural entanglement protocols? 🤔', time: 'Today at 14:30', reactions: ['🧠 3', '🔥 1'] },
+                { author: 'Nebula_Light', avatar: 'linear-gradient(135deg, #06ffa5, #00c9ff)', text: 'Just pushed an update to the void-renderer. Check out these new particle effects! <a href="#">[Preview]</a>', time: 'Today at 14:32', reactions: ['✨ 5'] },
+                { author: 'Void_Singer', avatar: 'linear-gradient(135deg, #ff006e, #8338ec)', text: 'Going live in 5 minutes with some quantum coding. Join the stream! 🚀', time: 'Today at 14:35', reactions: ['🚀 12', '❤️ 8'] }
+            ],
+            'quantum-lab': [
+                { author: 'Star_Knight', avatar: 'linear-gradient(135deg, #ffbe0b, #fb5607)', text: 'Working on the new warp drive calculations...', time: 'Today at 13:00', reactions: [] }
+            ],
+            'void-art': [
+                { author: 'Nebula_Light', avatar: 'linear-gradient(135deg, #06ffa5, #00c9ff)', text: 'Sharing some void-inspired artwork 🎨', time: 'Yesterday', reactions: ['🎨 15'] }
+            ],
+            'help-desk': [
+                { author: 'Quantum_X', avatar: 'linear-gradient(135deg, #3a86ff, #8338ec)', text: 'How do I configure my quantum key?', time: 'Today at 10:00', reactions: [] }
+            ]
+        };
+
+        let currentDimension = 'general';
+        let isMuted = false;
+        let isDeafened = false;
+
+        // Auto-resize textarea
+        const warpInput = document.getElementById('warpInput');
+        const warpBtn = document.getElementById('warpBtn');
+
+        warpInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            warpBtn.disabled = this.value.trim().length === 0;
+        });
+
+        function enterOrbit(element, orbit) {
+            document.querySelectorAll('.planet').forEach(p => p.classList.remove('active'));
+            element.classList.add('active');
+            showNotification('Orbit Changed', `Entered ${orbit} orbit`);
+        }
+
+        function tuneChannel(element, channel) {
+            document.querySelectorAll('.star-channel').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            currentDimension = channel;
+            document.getElementById('current-channel').textContent = channel;
+            warpInput.placeholder = `Transmit message to #${channel}...`;
+            loadDimension(channel);
+        }
+
+        function loadDimension(channel) {
+            const stream = document.getElementById('messageStream');
+            stream.innerHTML = `
+                <div class="signal-boost">
+                    <div class="signal-icon">${getChannelIcon(channel)}</div>
+                    <div class="signal-title">Welcome to #${channel}</div>
+                    <div class="signal-desc">${getChannelDescription(channel)}</div>
+                </div>
+            `;
+            
+            const transmissions = quantumArchives[channel] || [];
+            transmissions.forEach(t => broadcastToStream(t, false));
+        }
+
+        function getChannelIcon(channel) {
+            const icons = {
+                general: '🌌',
+                'quantum-lab': '⚛️',
+                'void-art': '🎨',
+                'help-desk': '🆘'
+            };
+            return icons[channel] || '#';
+        }
+
+        function getChannelDescription(channel) {
+            const descs = {
+                general: 'General discussion across the multiverse',
+                'quantum-lab': 'Scientific breakthroughs and experiments',
+                'void-art': 'Creative expressions from the void',
+                'help-desk': 'Support for stranded travelers'
+            };
+            return descs[channel] || 'Communication channel';
+        }
+
+        function broadcastToStream(transmission, animate = true) {
+            const stream = document.getElementById('messageStream');
+            const msg = document.createElement('div');
+            msg.className = 'transmission';
+            if (!animate) msg.style.animation = 'none';
+            
+            const initials = transmission.author.split('_').map(n => n[0]).join('');
+            
+            msg.innerHTML = `
+                <div class="transmission-avatar" style="background: ${transmission.avatar};">${initials}</div>
+                <div class="transmission-content">
+                    <div class="transmission-header">
+                        <span class="transmission-author">${transmission.author}</span>
+                        <span class="transmission-time">${transmission.time}</span>
+                    </div>
+                    <div class="transmission-body">${transmission.text}</div>
+                    ${transmission.reactions.length ? `
+                        <div class="reaction-orbit">
+                            ${transmission.reactions.map(r => `<div class="reaction">${r}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            stream.appendChild(msg);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        function handleWarp(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                transmit();
+            }
+        }
+
+        function transmit() {
+            const text = warpInput.value.trim();
+            if (!text) return;
+            
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const transmission = {
+                author: 'VoidWalker',
+                avatar: 'linear-gradient(135deg, #00f0ff, #b829dd)',
+                text: escapeHtml(text).replace(/\n/g, '<br>'),
+                time: `Today at ${time}`,
+                reactions: []
+            };
+            
+            broadcastToStream(transmission);
+            
+            // Save to archives
+            if (!quantumArchives[currentDimension]) quantumArchives[currentDimension] = [];
+            quantumArchives[currentDimension].push(transmission);
+            
+            // Clear input
+            warpInput.value = '';
+            warpInput.style.height = 'auto';
+            warpBtn.disabled = true;
+            
+            // Simulate quantum echo (reply)
+            setTimeout(() => {
+                const echoes = [
+                    'Interesting point! Have you considered the quantum implications?',
+                    'This resonates with my research in dimensional theory.',
+                    'Absolutely fascinating! 🌌',
+                    'Adding this to my notes...',
+                    'The void approves of this message. 👍'
+                ];
+                const echo = echoes[Math.floor(Math.random() * echoes.length)];
+                const echoTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                broadcastToStream({
+                    author: 'Quantum_X',
+                    avatar: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+                    text: echo,
+                    time: `Today at ${echoTime}`,
+                    reactions: ['👍 1']
+                });
+            }, 2000 + Math.random() * 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function createOrbit() {
+            const name = prompt('Name your new orbit:');
+            if (name) {
+                const nav = document.querySelector('.orbital-nav');
+                const planet = document.createElement('div');
+                planet.className = 'planet';
+                planet.style.background = `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)}, #${Math.floor(Math.random()*16777215).toString(16)})`;
+                planet.textContent = name[0].toUpperCase();
+                planet.onclick = function() { enterOrbit(this, name); };
+                nav.insertBefore(planet, document.querySelector('.add-orbit'));
+                showNotification('Orbit Created', `New orbit "${name}" established`);
+            }
+        }
+
+        function enterVortex(element) {
+            const channel = element.querySelector('span:last-child').textContent;
+            showNotification('Voice Vortex', `Connecting to ${channel}...`);
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            showNotification('Audio', isMuted ? 'Microphone disabled' : 'Microphone enabled');
+        }
+
+        function toggleDeafen() {
+            isDeafened = !isDeafened;
+            showNotification('Audio', isDeafened ? 'Audio output disabled' : 'Audio output enabled');
+        }
+
+        function openSettings() {
+            showNotification('Settings', 'Quantum configuration panel opening...');
+        }
+
+        function goHome() {
+            showNotification('Nexus', 'Returning to central command...');
+        }
+
+        function showServerMenu() {
+            showNotification('Server', 'Server menu accessed');
+        }
+
+        function showNotification(title, text) {
+            // Remove existing notifications
+            const existing = document.querySelector('.floating-notification');
+            if (existing) existing.remove();
+            
+            const notif = document.createElement('div');
+            notif.className = 'floating-notification';
+            notif.innerHTML = `
+                <div class="notification-avatar" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));">!</div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-text">${text}</div>
+                </div>
+            `;
+            document.body.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize
+        loadDimension('general');
+    </script>
+</body>
+</html>
